@@ -17,6 +17,7 @@ if not api_key:
 
 # Initialize Roboflow with the API key
 rf = Roboflow(api_key=api_key)
+rf = Roboflow(api_key="tAEs7pzo53VAUo8ui0h2")
 
 # Access the Chess Pieces dataset
 project = rf.workspace("roboflow-100").project("chess-pieces-mjzgj")
