@@ -1,22 +1,10 @@
 # fetch_dataset.py
 import os
 import sys
-from dotenv import load_dotenv
 from roboflow import Roboflow
 
-# Try to get API key from command-line argument first
-if len(sys.argv) > 1:
-    api_key = sys.argv[1]
-else:
-    # Fall back to environment variable if no command-line argument
-    load_dotenv()
-    api_key = os.getenv("ROBOFLOW_API_KEY")
-
-if not api_key:
-    raise ValueError("No API key found. Please provide it as a command-line argument or set the ROBOFLOW_API_KEY environment variable.")
 
 # Initialize Roboflow with the API key
-rf = Roboflow(api_key=api_key)
 rf = Roboflow(api_key="tAEs7pzo53VAUo8ui0h2")
 
 # Access the Chess Pieces dataset
