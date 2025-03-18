@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+
+    environment {
+        PROJECT_ROOT = "${WORKSPACE}"
+        CONFIGS_DIR = "${PROJECT_ROOT}/configs"
+        DATASETS_DIR = "${PROJECT_ROOT}/datasets"
+        SAVED_MODELS_DIR = "${PROJECT_ROOT}/saved_models"
+        SRC_DIR = "${PROJECT_ROOT}/src"
+        ROBOFLOW_API_KEY = credentials('roboflow-api-key')
+        GIT_REPO_URL = "https://github.com/your-repo.git"
+        VENV_DIR = "${PROJECT_ROOT}/venv"
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo "Cloning repository..."
+                sh "rm -rf ${PROJECT_ROOT}/*"
+                sh "git clone ${GIT_REPO_URL} ${PROJECT_ROOT}"
+            }
+        }
+
+        stage('Setup Environment') {
+            steps {
+                echo "Checking Python installation..."
+                sh 'which python3 || { echo "Python3 not found! Install Python first."; exit 1; }'
+
+                echo "Creating virtual environment and installing dependencies..."
+                sh '''
+                python3 -m venv ${VENV_DIR}
+                source ${VENV_DIR}/bin/activate
+                pip install --upgrade pip
+                if [ -f ${PROJECT_ROOT}/requirements.txt ]; then
+                    pip install -r ${PROJECT_ROOT}/requirements.txt
+                else
+                    echo "requirements.txt not found, installing core dependencies..."
+                    pip install roboflow ultralytics torch nni python-dotenv pyyaml
+                fi
+                pip cache purge
+                deactivate
+                '''
+
+                echo "Checking GPU availability..."
+                sh 'nvidia-smi || echo "No GPU detected, using CPU."'
+            }
+        }
+
+        stage('Download Dataset') {
+            steps {
+                echo "Downloading dataset..."
+                sh '''
+                source ${VENV_DIR}/bin/activate
+                python ${SRC_DIR}/fetch_dataset.py "${ROBOFLOW_API_KEY}" > dataset_output.txt
+                deactivate
+                '''
+                script {
+                    env.DOWNLOADED_DATASET_PATH = readFile('dataset_output.txt').find(/Dataset downloaded to: (.+)/) ?: error("Dataset download failed")
+                }
+            }
+        }
+
+        stage('Optimize with NNI') {
+            steps {
+                echo "Running NNI for NAS..."
+                sh '''
+                source ${VENV_DIR}/bin/activate
+                sed -i 's/maxExperimentDuration:.*/maxExperimentDuration: "4h"/' ${CONFIGS_DIR}/nni_config.yml
+                sed -i 's/maxTrialNumber:.*/maxTrialNumber: 25/' ${CONFIGS_DIR}/nni_config.yml
+                nnictl create --config ${CONFIGS_DIR}/nni_config.yml --port 8088 --foreground || echo 'NNI failed'
+                deactivate
+                '''
+                script {
+                    if (!fileExists("${CONFIGS_DIR}/best_yolov8_config.json")) error("NNI failed to produce config")
+                }
+            }
+        }
+
+        stage('Train Model') {
+            steps {
+                echo "Retraining model..."
+                sh '''
+                source ${VENV_DIR}/bin/activate
+                python ${SRC_DIR}/update_yolo_training_config.py --yolo-config ${CONFIGS_DIR}/best_yolov8_config.json --train-config ${CONFIGS_DIR}/train_config.yaml
+                python ${SRC_DIR}/retrain_model.py --config ${CONFIGS_DIR}/train_config.yaml --dataset ${DATASETS_DIR} --device 0 --epochs 5
+                deactivate
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Cleaning up..."
+            archiveArtifacts artifacts: "**/*.log", allowEmptyArchive: true
+            sh "nnictl stop all || true"
+            sh "find ${WORKSPACE} -name '*.pyc' -delete && find ${WORKSPACE} -name '__pycache__' -delete"
+        }
+        success { echo "Pipeline completed successfully!" }
+        failure { echo "Pipeline failed. Check logs for details." }
+    }
+}
