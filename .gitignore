@@ -166,7 +166,6 @@ bld/
 *.db
 *.sqlite
 *.sqlite3
-*.json
 *.log
 *.sql
 *.sqlite
