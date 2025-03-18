@@ -1,0 +1,27 @@
+experimentName: "yolov8_nas_optimized"
+trialConcurrency: 1
+maxExperimentDuration: "8h"    # Increased from 2h to 8h
+maxTrialNumber: 25             # Slightly increased from 20
+
+searchSpaceFile: "./configs/search_space.json"
+trialCommand: "python ./src/nni_nas_hpo.py"
+trialGpuNumber: 1              # Enable GPU usage if available
+
+tuner:
+  name: TPE
+  classArgs:
+    optimize_mode: maximize
+    seed: 42                   # For reproducibility
+
+assessor:                      # Add assessor for early stopping
+  name: Curvefitting
+  classArgs:
+    epoch_num: 20
+    optimization_mode: maximize
+    start_step: 5
+
+trainingService:
+  platform: local
+  useActiveGpu: true           # Use available GPU
+  gpuIndices: [0]              # Use first GPU when available
+  maxTrialNumberPerGpu: 1
