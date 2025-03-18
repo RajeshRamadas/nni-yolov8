@@ -16,10 +16,16 @@ if not api_key:
 rf = Roboflow(api_key=api_key)
 
 # Access the COCO dataset
-project = rf.workspace("microsoft").project("coco")
-version = project.version(13)
+#project = rf.workspace("microsoft").project("coco")
+#version = project.version(13)
+
+project = rf.workspace("roboflow-100").project("chess-pieces-mjzgj")
+version = project.version(2)
+dataset = version.download("yolov8")
 
 # Download the dataset in YOLOv8 format
 dataset = version.download("yolov8")
+
+
 
 print(f"Dataset downloaded to: {dataset.location}")
