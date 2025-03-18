@@ -1,9 +1,0 @@
-names:
-- circle
-- triangle
-- square
-- rectangle
-nc: 4
-test: C:\Users\uie65064\Desktop\ofa-yolov8_v5\datasets\shapes\test\images
-train: C:\Users\uie65064\Desktop\ofa-yolov8_v5\datasets\shapes\train\images
-val: C:\Users\uie65064\Desktop\ofa-yolov8_v5\datasets\shapes\val\images
