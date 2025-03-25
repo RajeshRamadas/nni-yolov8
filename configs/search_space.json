@@ -1,35 +1,35 @@
 {
   "nas_method": {
     "_type": "choice",
-    "_value": ["TPE", "Evolution"]  // Reduced from 4 to 2 most effective methods
+    "_value": ["TPE", "Evolution"]
   },
   "depth_multiple": {
     "_type": "choice",
-    "_value": [0.33, 0.50]  // Reduced from 3 to 2 values
+    "_value": [0.33, 0.50]
   },
   "width_multiple": {
     "_type": "choice",
-    "_value": [0.5, 0.75]  // Reduced from 4 to 2 values
+    "_value": [0.5, 0.75]
   },
   "resolution": {
     "_type": "choice",
-    "_value": [320, 640]  // Reduced from 3 to 2 values
+    "_value": [320, 640]
   },
   "lr0": {
     "_type": "loguniform",
-    "_value": [0.001, 0.1]  // Kept as is - critical parameter
+    "_value": [0.001, 0.1]
   },
   "batch_size": {
     "_type": "choice",
-    "_value": [16, 32]  // Removed smallest batch size
+    "_value": [16, 32]
   },
   "optimizer": {
     "_type": "choice",
-    "_value": ["Adam", "AdamW"]  // Focus on more modern optimizers
+    "_value": ["Adam", "AdamW"]
   },
   "pruning_amount": {
     "_type": "uniform",
-    "_value": [0.1, 0.3]  // Narrowed range to avoid excessive pruning
+    "_value": [0.1, 0.3]
   },
   "apply_quantization": {
     "_type": "choice",
@@ -41,6 +41,6 @@
   },
   "epochs": {
     "_type": "choice",
-    "_value": [5,10]
+    "_value": [5, 10]
   }
 }
